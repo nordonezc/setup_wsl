@@ -104,7 +104,7 @@ crear_carpetas() {
             echo -e "${RED}❌ Falló la creación de: $folder${NC}"
         fi
     done
-}
+}   
 
 configurar_ssh() {
     read -p "Email GitHub: " ssh_email
