@@ -55,12 +55,35 @@ instalar_node() {
 }
 
 instalar_python() {
-    if [ ! -d "$HOME/.pyenv" ]; then
+    if ! command -v pyenv &> /dev/null; then
+        echo "Instalando pyenv..."
         curl https://pyenv.run | bash
+        
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        eval "$(pyenv virtualenv-init -)"
     fi
-    export PYENV_ROOT="$HOME/.pyenv"
-    export PATH="$PYENV_ROOT/bin:$PATH"
-    eval "$(pyenv init -)"
+
+    PYTHON_VERSION="3.11.5"
+    
+    if ! pyenv versions | grep -q "$PYTHON_VERSION"; then
+        echo "Instalando Python $PYTHON_VERSION... (Esto puede tardar unos minutos)"
+        pyenv install "$PYTHON_VERSION"
+    else
+        echo "Python $PYTHON_VERSION ya está instalado."
+    fi
+
+    pyenv global "$PYTHON_VERSION"
+    pyenv rehash
+
+    INSTALLED_VER=$(python --version 2>&1)
+    if [[ $INSTALLED_VER == *"Python $PYTHON_VERSION"* ]]; then
+        echo "✅ Python configurado correctamente: $INSTALLED_VER"
+    else
+        echo "❌ Error: La verificación de Python falló. Se detecta: $INSTALLED_VER"
+        exit 1
+    fi
 }
 
 configurar_react_shadcn() {
