@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Dont forget to install wsl and give permissions to file chmod +x setup.sh
+
 if [ -z "$BASH_VERSION" ]; then
     exec /bin/bash "$0" "$@"
 fi
@@ -137,6 +139,51 @@ configurar_ssh() {
     cat "$HOME/.ssh/id_ed25519.pub"
 }
 
+setup_python_project() {
+    echo "--- Configuración de Proyecto Python ---"
+    read -p "Introduce la ruta completa del proyecto (ej: ~/proyectos/mi-data-app): " PROJECT_PATH
+    
+    # Expandir tilde si existe y crear directorio
+    PROJECT_PATH=$(eval echo $PROJECT_PATH)
+    mkdir -p "$PROJECT_PATH"
+    cd "$PROJECT_PATH" || exit
+
+    echo "Creando entorno virtual en $PROJECT_PATH/.venv..."
+    python3 -m venv .venv
+
+    # Definir el ejecutable de pip dentro del entorno para no tener que "activarlo" manualmente en el script
+    VENV_PIP="$PROJECT_PATH/.venv/bin/pip"
+    VENV_PYTHON="$PROJECT_PATH/.venv/bin/python"
+
+    # Crear archivo Jupyter inicial (Markdown + Code)
+    echo "Generando archivo Jupyter inicial..."
+    cat <<EOF > notebook_inicial.ipynb
+{
+ "cells": [
+  { "cell_type": "markdown", "metadata": {}, "source": [ "# Proyecto Inicial\\n", "Creado automáticamente por el script de configuración." ] },
+  { "cell_type": "code", "execution_count": null, "metadata": {}, "outputs": [], "source": [ "import numpy as np\\n", "print('Entorno listo:', np.__version__)" ] }
+ ],
+ "metadata": { "kernelspec": { "display_name": "Python 3", "language": "python", "name": "python3" } },
+ "nbformat": 4, "nbformat_minor": 4
+}
+EOF
+
+    read -p "¿Deseas instalar los módulos base (numpy, pandas, jupyter, ipykernel)? (s/n): " INSTALL_CONFIRM
+    if [[ "$INSTALL_CONFIRM" =~ ^[Ss]$ ]]; then
+        echo "Instalando librerías... Esto puede tardar."
+        $VENV_PIP install --upgrade pip
+        $VENV_PIP install numpy pandas jupyter ipykernel
+        echo "✅ Librerías instaladas correctamente."
+    else
+        echo "Aviso: Deberás instalar las librerías manualmente más tarde para ejecutar el notebook."
+    fi
+
+    echo "---"
+    echo "🚀 Proyecto listo en: $PROJECT_PATH"
+    echo "Para activarlo manualmente: source .venv/bin/activate"
+    echo "En VS Code: Selecciona el intérprete en $PROJECT_PATH/.venv/bin/python"
+}
+
 while true; do
     echo -e "\n${GREEN}==============================================${NC}"
     echo -e "${GREEN}      CV-NOC ULTIMATE MANAGER v14.0          ${NC}"
@@ -147,12 +194,13 @@ while true; do
     echo "4) Java (GraalVM 21)"
     echo "5) Node.js (LTS)"
     echo "6) Python (Pyenv)"
-    echo "7) React Core Libs"
-    echo "8) Angular CLI"
-    echo "9) Cloud CLIs (AWS/GCP)"
-    echo "10) Crear Carpetas Workspace"
-    echo "11) Configurar Llave SSH"
-    echo "12) Salir y Refrescar"
+    echo "7) Python Environment + Jupyter"
+    echo "8) React Core Libs"
+    echo "9) Angular CLI"
+    echo "10) Cloud CLIs (AWS/GCP)"
+    echo "11) Crear Carpetas Workspace"
+    echo "12) Configurar Llave SSH"
+    echo "13) Salir y Refrescar"
     echo -e "${GREEN}==============================================${NC}"
     read -p "Opción: " opcion
 
@@ -163,12 +211,13 @@ while true; do
         4) instalar_java ;;
         5) instalar_node ;;
         6) instalar_python ;;
-        7) configurar_react_shadcn ;;
-        8) configurar_angular ;;
-        9) configurar_cloud_clis ;;
-        10) crear_carpetas ;;
-        11) configurar_ssh ;;
-        12) exec bash; break ;;
+        7) setup_python_project ;;
+        8) configurar_react_shadcn ;;
+        9) configurar_angular ;;
+        10) configurar_cloud_clis ;;
+        11) crear_carpetas ;;
+        12) configurar_ssh ;;
+        13) exec bash; break ;;
         *) echo "Invalido" ;;
     esac
 done
